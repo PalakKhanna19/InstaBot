@@ -1,4 +1,4 @@
-import requests,urllib
+import requests,urllib,pylab
 from textblob import TextBlob
 from textblob.sentiments import NaiveBayesAnalyzer
 
@@ -272,6 +272,76 @@ def location(insta_username):
 
 
 
+def location_media(insta_username):
+    item={}
+    user_id = get_user_id(insta_username)
+
+    locid=location(insta_username)
+
+    if user_id == None:
+        print 'User does not exist!'
+        exit()
+    request_url = (BASE+'locations/%d/media/recent?access_token=%s')%(locid,myAPP_ACCESS_TOKEN)
+
+    lat_long = requests.get(request_url).json()
+
+
+    if lat_long['meta']['code'] == 200:
+
+        if len(lat_long['data']):
+
+
+            for x in range(0, len(lat_long['data'])):
+                for y in range(0, len(lat_long['data'][x]['tags'])):
+                    if lat_long['data'][x]['tags'][y] in item:
+
+                        item[lat_long['data'][x]['tags'][y]]+= 1
+                    else:
+
+                        item[lat_long['data'][x]['tags'][y]] = 1
+
+                image_name = lat_long['data'][x]['id'] + '.jpeg'
+                image_url = lat_long['data'][x]['images']['standard_resolution']['url']
+                urllib.urlretrieve(image_url,image_name)
+            #tag = lat_long['data'][x]['tags']
+
+
+
+            print 'Your image has been downloaded!'
+
+
+
+
+            print image_name
+        else:
+
+            print 'Post does not exist!'
+    else:
+        print 'Status code other than 200 received!'
+    print item
+
+    pylab.figure(1)
+    x = range(len(item))
+    pylab.xticks(x, item.keys())
+    pylab.plot(x, item.values(), "b")
+    pylab.show()
+    exit()
+
+def user_search():
+    search_result = raw_input("Enter the name: ")
+    request_url=(BASE+ 'users/search?q=%s&access_token=%s') % (search_result, myAPP_ACCESS_TOKEN)
+    Q=requests.get(request_url).json()
+
+    if Q['meta']['code']==200:
+        if len(Q['data']):
+            for x in range (0,len(Q['data'])):
+                search = Q['data'][x]['id']
+                print 'The users with this username are: %s\n' % search
+
+        else:
+            print 'No results found for this user!'
+    else:
+        print 'Status code other than 200 received!'
 
 
 
@@ -291,7 +361,9 @@ def start_bot():
         print "8. View all the comments on the recent post of a given user\n"
         print "9.Delete the negative comment on a recent post of a user\n"
         print "10. To view the recently liked  media by you\n"
-        print "11.Leave InstaBot"
+        print "11.To view how is the weather conditions around the recent location of a user\n"
+        print '12.Enter the username to search\n'
+        print "13.Stop instabot\n"
 
         choice = raw_input("Enter you choice: ")
         if choice == "1":
@@ -353,8 +425,19 @@ def start_bot():
 
             get_media_liked_own()
 
-
         elif choice == "11":
+            insta_username = raw_input("Enter the username of the user: ")
+            if set('[~!#$%^&*()_+{}":;\']+$ " "').intersection(insta_username):
+                print "Invalid entry. Please Enter a valid name of single word without special characters"
+            else:
+                location_media(insta_username)
+
+        elif choice == "12":
+            user_search()
+
+
+
+        elif choice == "13":
             exit()
         else:
             print "wrong choice"
