@@ -248,6 +248,7 @@ def get_media_liked_own(): #function for retrieving the recently liked pic by th
 
 
 def location(insta_username):
+
     user_id = get_user_id(insta_username)
     media_id=get_post_id(insta_username)
     if user_id == None:
@@ -271,46 +272,41 @@ def location(insta_username):
         exit()
 
 
+def location_media():
+    #for geo fencing. Returns all the images of a current location and analyses the hashtags and plots a graph
+    #location used is Chandigarh with lat=30.737200 and long=76.787200
+    item = {}
 
-def location_media(insta_username):
-    item={}
-    user_id = get_user_id(insta_username)
+    lat = float(raw_input("Enter lat"))
 
-    locid=location(insta_username)
+    lon = float(raw_input("Enter long"))
 
-    if user_id == None:
-        print 'User does not exist!'
-        exit()
-    request_url = (BASE+'locations/%d/media/recent?access_token=%s')%(locid,myAPP_ACCESS_TOKEN)
+    request_url = ('https://api.instagram.com/v1/media/search?lat=%f&lng=%f&access_token=%s') % (
+    lat, lon, myAPP_ACCESS_TOKEN)
 
     lat_long = requests.get(request_url).json()
-
 
     if lat_long['meta']['code'] == 200:
 
         if len(lat_long['data']):
 
-
             for x in range(0, len(lat_long['data'])):
                 for y in range(0, len(lat_long['data'][x]['tags'])):
                     if lat_long['data'][x]['tags'][y] in item:
 
-                        item[lat_long['data'][x]['tags'][y]]+= 1
+                        item[lat_long['data'][x]['tags'][y]] += 1
                     else:
 
                         item[lat_long['data'][x]['tags'][y]] = 1
 
                 image_name = lat_long['data'][x]['id'] + '.jpeg'
                 image_url = lat_long['data'][x]['images']['standard_resolution']['url']
-                urllib.urlretrieve(image_url,image_name)
-            #tag = lat_long['data'][x]['tags']
+                urllib.urlretrieve(image_url, image_name)
+            # tag = lat_long['data'][x]['tags']
 
 
 
             print 'Your image has been downloaded!'
-
-
-
 
             print image_name
         else:
@@ -325,7 +321,8 @@ def location_media(insta_username):
     pylab.xticks(x, item.keys())
     pylab.plot(x, item.values(), "b")
     pylab.show()
-    exit()
+
+
 
 def user_search():
     search_result = raw_input("Enter the name: ")
@@ -426,11 +423,8 @@ def start_bot():
             get_media_liked_own()
 
         elif choice == "11":
-            insta_username = raw_input("Enter the username of the user: ")
-            if set('[~!#$%^&*()_+{}":;\']+$ " "').intersection(insta_username):
-                print "Invalid entry. Please Enter a valid name of single word without special characters"
-            else:
-                location_media(insta_username)
+
+            location_media()
 
         elif choice == "12":
             user_search()
